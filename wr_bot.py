@@ -8,11 +8,11 @@ import numpy as np
 work_dir:str #рабочая директория
 screenshot_path:str #пусть к скриншоту
 img_rgb:np.ndarray # скриншот
-target_images:np.ndarray=['ad_disable', 'ad_enable', 'ad_exit_next0', 'ad_exit_next1', 'ad_exit0', 'ad_exit1', 'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'back', 'bronze_box']
+target_images:np.ndarray=['ad_disable', 'ad_enable', 'black_market', 'ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'back', 'bronze_box']
 target_images_rgb={} #загруженные целевые изображения
+target_images_psize={} #половинный размеры загруженных целевых изображений
 target_recognized={} #распознанные целевые изображения на скриншоте
 threshold = 0.7 #порог распознавания
-wm_size=[] #размер экрана в пикселях
 
 def printLog(str_log):
     print(time.strftime("%X\t", time.localtime()) + str_log)
@@ -20,9 +20,9 @@ def printLog(str_log):
 def load_target_images():
     global target_images_rgb
     for img_t in target_images:
-        target_images_rgb[img_t]=cv2.imread(f"{work_dir}\\images\\{img_t}.png")
-    #target_images = next(os.walk(f"{work_dir}\\images"), (None, None, []))[2]
-
+        target_images_rgb[img_t]=cv2.imread(f"{work_dir}\\images\\{img_t}.png") #загружаем в память
+        _, w, h = target_images_rgb[img_t].shape[::-1] #получаем размеры
+        target_images_psize[img_t]=[w//2,h//2]
 
 def get_screenshot():
     global img_rgb
@@ -43,48 +43,38 @@ def recognize_screenshot():
     printLog("recognize_screenshot started")
     for img_t in target_images:
         res = cv2.matchTemplate(img_rgb,target_images_rgb[img_t],cv2.TM_CCOEFF_NORMED)
-        loc = np.where(res >= threshold)
-        target_recognized[img_t]=True if (len(loc[0])>0) else False
-        printLog(f"Img: {img_t} - {target_recognized[img_t]}")
+        #получаем координаты и вероятности
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        #получаем координаты центра
+        cx=max_loc[0]+target_images_psize[img_t][0]
+        cy=max_loc[1]+target_images_psize[img_t][1]
+        #записываем результаты
+        target_recognized[img_t]=[True if (max_val>threshold) else False, cx, cy]
+        printLog(f"Img: {img_t} - {target_recognized[img_t][0]}, location: x:{cx}, y:{cy}")
     printLog("recognize_screenshot is complete.")
 
-def convert_xy_position(x,y):
-    SurfaceOrientation=int(subprocess.run(['C:\\ADB\\adb.exe', 'shell', 'dumpsys input | grep SurfaceOrientation | awk "{print $2}" | head -n 1'], capture_output=True, text=True).stdout[26:-1])
-    printLog(f'SurfaceOrientation: {SurfaceOrientation}')
-    if SurfaceOrientation==0:
-        new_x=x
-        new_y=y
-    elif SurfaceOrientation==1:
-        new_x=wm_size[0]-y
-        new_y=x
-    elif SurfaceOrientation==2:
-        new_x=wm_size[0]-x
-        new_y=wm_size[1]-y 
-    elif SurfaceOrientation==3:
-        new_x=y
-        new_y=wm_size[1]-x
-    return new_x, new_y
-
 def tap_screen(x, y):
-    #cx,cy=convert_xy_position(x,y)
-    ret=subprocess.run(['C:\\ADB\\adb.exe', 'shell', f'input tap {x} {y}'], capture_output=True, text=True).stdout
-    #printLog(f"tap x:{x}, y:{y}, cmd: x:{cx}, y:{cy}")
+    subprocess.run(['C:\\ADB\\adb.exe', 'shell', f'input tap {x} {y}'])
     printLog(f"tap x:{x}, y:{y}")
 
 def au_worker():
-    if (target_recognized['discount_banner0'] or target_recognized['discount_banner1']) and target_recognized['main_menu_exit']:
-        tap_screen(2208, 56)
-    elif target_recognized['discount_banner2']:
+    if (target_recognized['discount_banner0'][0] or target_recognized['discount_banner1'][0]) and target_recognized['main_menu_exit'][0]: #первый тип акционного банера, закрываем
+        tap_screen(target_recognized['main_menu_exit'][1], target_recognized['main_menu_exit'][2])
+    elif target_recognized['discount_banner2'][0]: #второй тип акционного банера, закрываем
         tap_screen(1764, 267)
-    elif target_recognized['main_menu']:
+    elif target_recognized['main_menu'][0]: #если в начальном меню, то идем в коробки
         tap_screen(62, 720)
-    elif target_recognized['box_open']:
+    elif target_recognized['box_open'][0]: #если можем открыть коробку
         tap_screen(652, 744)
-    elif target_recognized['ad_exit_next0'] or target_recognized['ad_exit_next1'] or target_recognized['ad_exit0'] or target_recognized['ad_exit1']:
-        tap_screen(2195, 66)
-    elif target_recognized['back'] and target_recognized['bronze_box']:
+    elif target_recognized['black_market'][0]: #если нельзя открыть бесплатно коробку (мы в меню коробок), то завершаем скрипт
+        printLog("black_market closed. Exit.")
+        sys.exit()  # завершаем программу
+    elif target_recognized['back'][0] and target_recognized['bronze_box'][0]: #если покрутили рулетку, то выходим из коробки
         tap_screen(100, 1024)
-
+    else:
+        for ad_e in {'ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2'}: #ищем кнопки для выхода из рекламы
+            if target_recognized[ad_e][0]:
+                tap_screen(target_recognized[ad_e][1], target_recognized[ad_e][2])
 
 if __name__ == "__main__":
     printLog("Starting wr_bot")
@@ -99,21 +89,12 @@ if __name__ == "__main__":
 
     ret=subprocess.run(['C:\\ADB\\adb.exe', 'devices'], capture_output=True, text=True).stdout
     printLog(f'Devices: {ret}')
-    '''
-    #получаем разрешение экрана
-    ret=subprocess.run(['C:\\ADB\\adb.exe', 'shell', 'wm size'], capture_output=True, text=True).stdout
-    wm_size_text=ret[15:-1].split('x') #получаем из ответа ху в строковом виде
-    wm_size=[int(wm_size_text[0]), int(wm_size_text[1])] #сохраняем как числовые для вычислений
-    printLog(f'Device display size: x={wm_size[0]}, y={wm_size[1]}')
-    '''
 
     while(1):
         printLog("Loop")
-        if get_screenshot():
-            recognize_screenshot()
-            au_worker()
-        time.sleep(1)
-        printLog("End")
-
-    
-    printLog("Exit")
+        if get_screenshot(): #пытаемся получить скриншот, если получили
+            recognize_screenshot() #распознаем все что знаем
+            au_worker() #принимаем действия
+            time.sleep(1) #после выполнения действий даем время на анимацию (загрузку активити)
+        printLog("Loop end")
+    printLog("Exit.")
