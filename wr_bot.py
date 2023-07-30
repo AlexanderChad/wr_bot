@@ -12,7 +12,7 @@ target_images:np.ndarray=['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end
 target_images_rgb={} #загруженные целевые изображения
 target_images_psize={} #половинный размеры загруженных целевых изображений
 target_recognized={} #распознанные целевые изображения на скриншоте
-threshold=0.85 #порог распознавания
+threshold=0.81 #порог распознавания
 discount_special_cn=0 #пункт меню специальных предложений
 start_time_ad:time #время начала видео
 timeout_ad=90 #время, отведенное на рекламу
