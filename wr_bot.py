@@ -56,7 +56,7 @@ def recognize_screenshot(): #распознаем на скриншоте все
         #записываем результаты
         target_recognized[img_t]=[True if (max_val>threshold) else False, cx, cy]
         #проверяем активна ли кнопка по цвету пикселя
-        if img_t=='ad_enable' and target_recognized[img_t][0] and sum(img_rgb[cy][cx-158])<700: 
+        if img_t=='ad_enable' and target_recognized[img_t][0] and sum(img_rgb[cy][cx-158])<700 and sum(img_rgb[cy][cx+112])<500: 
             target_recognized[img_t][0]=False #если не активна, то исправляем найденное
             printLog(f"Img: ad_enable - disabled, location: x:{cx}, y:{cy}")
         #печатаем в лог все найденные
@@ -79,8 +79,8 @@ def au_worker(): #работник, принимающий решение что
                 tap_screen(target_recognized['ruletka_attemp'][1], target_recognized['ruletka_attemp'][2]) #нажимаем
                 start_time_ad = time.time()
                 ad_mode=True
-            elif target_recognized['ruletka_end'][0]:
-                ruletka_mode=False
+            elif target_recognized['ruletka_end'][0]: #если больше нет попыток
+                ruletka_mode=False #отмечаем режим недоступным
                 printLog("Go menu")
                 tap_screen(80, 1024) #выход в главное меню
     #первый тип акционного банера (при загрузке), закрываем
