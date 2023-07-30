@@ -8,11 +8,13 @@ import numpy as np
 work_dir:str #рабочая директория
 screenshot_path:str #пусть к скриншоту
 img_rgb:np.ndarray # скриншот
-target_images:np.ndarray=['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end', 'get', 'ok', 'black_market', 'discount_special', 'ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'back', 'bronze_box']
+target_images:np.ndarray=['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end', 'get', 'ok', 'black_market', 'discount_special', 'ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'ad_exit3', 'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'back', 'bronze_box', 'special_icon']
+target_exit:np.ndarray=['ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'ad_exit3']
+target_exit_cut:np.ndarray=[700,300] #размеры квадрата справа для поиска кнопки выхода
 target_images_rgb={} #загруженные целевые изображения
 target_images_psize={} #половинный размеры загруженных целевых изображений
 target_recognized={} #распознанные целевые изображения на скриншоте
-threshold=0.81 #порог распознавания
+threshold=0.82 #порог распознавания
 discount_special_cn=0 #пункт меню специальных предложений
 start_time_ad:time #время начала видео
 timeout_ad=90 #время, отведенное на рекламу
@@ -46,13 +48,23 @@ def recognize_screenshot(): #распознаем на скриншоте все
     global target_recognized, img_rgb
     printLog("recognize_screenshot started")
     for img_t in target_images: #перебираем целевые
+        img_cut_flag=False #флаг, что распознаем только область
+        if img_t in target_exit: #это кнопка выхода?
+            img_s=img_rgb[:target_exit_cut[1], -target_exit_cut[0]:]
+            img_cut_flag=True
+        else:
+            img_s=img_rgb
         #ищем
-        res = cv2.matchTemplate(img_rgb,target_images_rgb[img_t],cv2.TM_CCOEFF_NORMED)
+        res = cv2.matchTemplate(img_s,target_images_rgb[img_t],cv2.TM_CCOEFF_NORMED)
         #получаем координаты и вероятности
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        _, max_val, _, max_loc = cv2.minMaxLoc(res)
         #получаем координаты центра
         cx=max_loc[0]+target_images_psize[img_t][0]
         cy=max_loc[1]+target_images_psize[img_t][1]
+        #если искали в области, то корректируем координаты
+        if img_cut_flag:
+            _, w, _ = img_rgb.shape
+            cx+=w-target_exit_cut[0]
         #записываем результаты
         target_recognized[img_t]=[True if (max_val>threshold) else False, cx, cy]
         #проверяем активна ли кнопка по цвету пикселя
@@ -95,7 +107,7 @@ def au_worker(): #работник, принимающий решение что
         if ruletka_mode: #еще не были в рулетке?
             printLog("Go ruletka")
             tap_screen(2070, 350) #идем в рулетку
-        elif discount_special_cn<5: #уже были в специальном?
+        elif discount_special_cn<5 and target_recognized['special_icon'][0]: #уже были в специальном? и можем пойти?
             printLog("Go special")
             tap_screen(190, 470) #идем в специальное
         else:
@@ -139,7 +151,7 @@ def au_worker(): #работник, принимающий решение что
         ad_mode=False
     else:
         tap_exit_ad=False
-        for ad_e in {'ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2'}: #ищем кнопки для выхода из рекламы
+        for ad_e in target_exit: #ищем кнопки для выхода из рекламы
             if target_recognized[ad_e][0]:
                 tap_screen(target_recognized[ad_e][1], target_recognized[ad_e][2]) #выходим
                 tap_exit_ad=True
