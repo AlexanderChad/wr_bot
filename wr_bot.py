@@ -14,7 +14,7 @@ target_exit_cut:np.ndarray=[700,300] #размеры квадрата справ
 target_images_rgb={} #загруженные целевые изображения
 target_images_psize={} #половинный размеры загруженных целевых изображений
 target_recognized={} #распознанные целевые изображения на скриншоте
-threshold=0.82 #порог распознавания
+threshold=0.81 #порог распознавания
 discount_special_cn=0 #пункт меню специальных предложений
 start_time_ad:time #время начала видео
 timeout_ad=90 #время, отведенное на рекламу
@@ -91,6 +91,8 @@ def au_worker(): #работник, принимающий решение что
                 tap_screen(target_recognized['ruletka_attemp'][1], target_recognized['ruletka_attemp'][2]) #нажимаем
                 start_time_ad = time.time()
                 ad_mode=True
+            elif target_recognized['get'][0]: #если видим кнопку для ПЕРВОГО вращения
+                tap_screen(target_recognized['get'][1], target_recognized['get'][2]) #нажимаем
             elif target_recognized['ruletka_end'][0]: #если больше нет попыток
                 ruletka_mode=False #отмечаем режим недоступным
                 printLog("Go menu")
