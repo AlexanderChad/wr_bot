@@ -8,7 +8,7 @@ import numpy as np
 work_dir:str #рабочая директория
 screenshot_path:str #пусть к скриншоту
 img_rgb:np.ndarray # скриншот
-target_images:np.ndarray=['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end', 'get', 'ok', 'black_market', 'discount_special', 'ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'ad_exit3', 'ad_exit4', 'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'back', 'bronze_box', 'special_icon']
+target_images:np.ndarray=['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end', 'get', 'ok', 'black_market', 'discount_special', 'ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'ad_exit3', 'ad_exit4', 'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'back', 'bronze_box', 'special_icon', 'ruletka_icon']
 target_exit:np.ndarray=['ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'ad_exit3', 'ad_exit4']
 target_exit_cut:np.ndarray=[700,300] #размеры квадрата справа для поиска кнопки выхода
 target_images_rgb={} #загруженные целевые изображения
@@ -97,6 +97,11 @@ def au_worker(): #работник, принимающий решение что
                 ruletka_mode=False #отмечаем режим недоступным
                 printLog("Go menu")
                 tap_screen(80, 1024) #выход в главное меню
+    elif target_recognized['get'][0]: #если можем получить вознаграждение
+        tap_screen(target_recognized['get'][1], target_recognized['get'][2])
+        ad_mode=False
+    elif target_recognized['ok'][0]: #подтверждаем получение вознаграждения
+        tap_screen(target_recognized['ok'][1], target_recognized['ok'][2])
     #первый тип акционного банера (при загрузке), закрываем
     elif (target_recognized['discount_banner0'][0] or target_recognized['discount_banner1'][0]) and target_recognized['main_menu_exit'][0]:
         tap_screen(target_recognized['main_menu_exit'][1], target_recognized['main_menu_exit'][2]) #закрываем
@@ -106,9 +111,9 @@ def au_worker(): #работник, принимающий решение что
         tap_screen(1764, 267) #закрываем
         ad_mode=False
     elif target_recognized['main_menu'][0]: #если в начальном меню, то
-        if ruletka_mode: #еще не были в рулетке?
+        if ruletka_mode and target_recognized['ruletka_icon'][0]: #еще не были в рулетке?
             printLog("Go ruletka")
-            tap_screen(2070, 350) #идем в рулетку
+            tap_screen(target_recognized['ruletka_icon'][1], target_recognized['ruletka_icon'][2]) #идем в рулетку
         elif discount_special_cn<5 and target_recognized['special_icon'][0]: #уже были в специальном? и можем пойти?
             printLog("Go special")
             tap_screen(190, 470) #идем в специальное
@@ -120,11 +125,6 @@ def au_worker(): #работник, принимающий решение что
         tap_screen(652, 744) #открываем
         start_time_ad = time.time()
         ad_mode=True
-    elif target_recognized['get'][0]: #если можем получить вознаграждение
-        tap_screen(target_recognized['get'][1], target_recognized['get'][2])
-        ad_mode=False
-    elif target_recognized['ok'][0]: #подтверждаем получение вознаграждения
-        tap_screen(target_recognized['ok'][1], target_recognized['ok'][2])
     elif target_recognized['discount_special'][0]: #если в специальном
         #если НЕ активна кнопка "смотреть"
         #нет для открытия коробок, то открываем следующую вкладку
