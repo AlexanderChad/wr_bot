@@ -116,7 +116,7 @@ def au_worker(): #работник, принимающий решение что
             tap_screen(target_recognized['ruletka_icon'][1], target_recognized['ruletka_icon'][2]) #идем в рулетку
         elif discount_special_cn<5 and target_recognized['special_icon'][0]: #уже были в специальном? и можем пойти?
             printLog("Go special")
-            tap_screen(190, 470) #идем в специальное
+            tap_screen(target_recognized['special_icon'][1], target_recognized['special_icon'][2]) #идем в специальное
         else:
             printLog("Go box")
             tap_screen(62, 720) #идем в коробки
