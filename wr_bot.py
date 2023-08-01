@@ -71,6 +71,9 @@ def recognize_screenshot(): #распознаем на скриншоте все
         if img_t=='ad_enable' and target_recognized[img_t][0] and sum(img_rgb[cy][cx-158])<700 and sum(img_rgb[cy][cx+112])<500: 
             target_recognized[img_t][0]=False #если не активна, то исправляем найденное
             printLog(f"Img: ad_enable - disabled, location: x:{cx}, y:{cy}")
+        elif  img_t=='ad_exit2' and target_recognized[img_t][0] and img_rgb[cy+17][cx-18][0]<150 and img_rgb[cy+17][cx-18][1]>150 and img_rgb[cy+17][cx-18][2]>200: 
+            target_recognized[img_t][0]=False #если не верная, то исправляем найденное
+            print(f"Img: ad_exit2 - disabled, location: x:{cx}, y:{cy}")
         #печатаем в лог все найденные
         if target_recognized[img_t][0]:
             printLog(f"Img: {img_t}, location: x:{cx}, y:{cy}")
@@ -130,16 +133,16 @@ def au_worker(): #работник, принимающий решение что
         #нет для открытия коробок, то открываем следующую вкладку
         if discount_special_cn==1: 
             printLog("Go special 2")
-            tap_screen(80, 370) #вторая вкладка
+            tap_screen(110, 370) #вторая вкладка
         elif discount_special_cn==2:
             printLog("Go special 3")
-            tap_screen(80, 470) #третья вкладка
+            tap_screen(110, 470) #третья вкладка
         elif discount_special_cn==3:
             printLog("Go special 4")
-            tap_screen(80, 560) #четвертая вкладка
-        elif discount_special_cn==4:
+            tap_screen(110, 560) #четвертая вкладка
+        elif discount_special_cn>3:
             printLog("Go menu")
-            tap_screen(80, 1024) #выход в главное меню
+            tap_screen(110, 1024) #выход в главное меню
         discount_special_cn+=1
     elif target_recognized['black_market'][0]: #если нельзя открыть бесплатно коробку (мы в меню коробок), то завершаем скрипт
         printLog("black_market closed")
