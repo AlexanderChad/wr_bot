@@ -8,8 +8,9 @@ import numpy as np
 work_dir:str #рабочая директория
 screenshot_path:str #пусть к скриншоту
 img_rgb:np.ndarray # скриншот
-target_images:np.ndarray=['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end', 'get', 'ok', 'black_market', 'discount_special', 'ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'ad_exit3', 'ad_exit4', 'ad_exit5', 'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'back', 'bronze_box', 'special_icon', 'ruletka_icon']
+target_icons:np.ndarray=['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end', 'get', 'ok', 'black_market', 'discount_special', 'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'back', 'bronze_box', 'special_icon', 'ruletka_icon']
 target_exit:np.ndarray=['ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit0', 'ad_exit1', 'ad_exit2', 'ad_exit3', 'ad_exit4', 'ad_exit5']
+target_images:np.ndarray=np.concatenate([target_icons, target_exit])
 target_exit_cut:np.ndarray=[700,300] #размеры квадрата справа для поиска кнопки выхода
 target_images_rgb={} #загруженные целевые изображения
 target_images_psize={} #половинный размеры загруженных целевых изображений
