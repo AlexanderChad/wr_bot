@@ -14,11 +14,13 @@ if show_screen_img:
 work_dir: str  # рабочая директория
 screenshot_path: str  # пусть к скриншоту
 img_rgb: np.ndarray  # скриншот
-target_icons: np.ndarray = ['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end', 'get', 'ok', 'black_market', 'discount_special', 'box_open',
-                            'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2', 'discount_banner3', 'discount_banner3_exit', 'back', 'bronze_box',
-                            'special_icon', 'ruletka_icon', 's1', 's2', 's3', 's4', 'gp', 'ch']
-target_exit: np.ndarray = ['ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit_next3', 'ad_exit_next4',
-                           'ad_exit0', 'ad_exit1', 'ad_exit1_mask', 'ad_exit2', 'ad_exit3', 'ad_exit4', 'ad_exit5', 'ad_exit6', 'ad_exit7', 'ad_exit7_mask', 'ad_exit8', 'ad_exit9', 'ad_exit9_mask']
+target_icons: np.ndarray = ['ad_enable', 'ruletka', 'ruletka_attemp', 'ruletka_end', 'get', 'ok', 'black_market', 'discount_special',
+                            'box_open', 'main_menu', 'main_menu_exit', 'discount_banner0', 'discount_banner1', 'discount_banner2',
+                            'discount_banner3', 'discount_banner3_exit', 'back', 'bronze_box', 'special_icon', 'ruletka_icon', 's1',
+                            's2', 's3', 's4', 'gp', 'ch']
+target_exit: np.ndarray = ['ad_exit_next0', 'ad_exit_next1', 'ad_exit_next2', 'ad_exit_next3', 'ad_exit_next4', 'ad_exit_next5',
+                           'ad_exit0', 'ad_exit1', 'ad_exit1_mask', 'ad_exit2', 'ad_exit3', 'ad_exit4', 'ad_exit5', 'ad_exit6',
+                           'ad_exit7', 'ad_exit7_mask', 'ad_exit8', 'ad_exit9', 'ad_exit9_mask', 'ad_exit10', 'ad_exit11']
 target_images: np.ndarray = np.concatenate([target_icons, target_exit])
 # размеры квадрата справа для поиска кнопки выхода
 target_exit_cut: np.ndarray = [700, 300]
@@ -99,9 +101,10 @@ def recognize_screenshot():  # распознаем на скриншоте вс
         # записываем результаты
         target_recognized[img_t] = [
             True if ((max_val > threshold) if (rec_metod == cv2.TM_CCOEFF_NORMED) else (min_val < 0.003)) else False, cx, cy]
+        # for debug
+        # if img_t == 'ad_exit7':
+        #    print(f'min_val = {min_val}, max_val = {max_val}')
         # проверяем активна ли кнопка по цвету пикселя
-        if img_t == 'ad_enable':
-            print(f'sum(img_rgb[cy][cx+5]) = {sum(img_rgb[cy][cx+5])}, sum(img_rgb[cy][cx+10]) = {sum(img_rgb[cy][cx+10])}, min_val = {min_val}')
         if img_t == 'ad_enable' and target_recognized[img_t][0] and sum(img_rgb[cy][cx+5]) < 700 and sum(img_rgb[cy][cx+10]) < 500:
             # если не активна, то исправляем найденное
             target_recognized[img_t][0] = False
@@ -260,7 +263,8 @@ def au_worker():  # работник, принимающий решение чт
         # если не нажимали на выход и время на рекламу вышло, а мы все еще в режиме просмотра
         if ad_mode and (not tap_exit_ad) and ((time.time() - start_time_ad) > timeout_ad):
             printLog("timeout_ad")
-            tap_screen(2200, 50)  # жмем в ту область, где он должен быть
+            height, width, _ = img_rgb.shape
+            tap_screen(width-50, 50)  # жмем в ту область, где он должен быть
 
 
 if __name__ == "__main__":
@@ -330,6 +334,6 @@ if __name__ == "__main__":
             if show_screen_img:
                 upd_img_on_window()
             # после выполнения действий даем время на анимацию (загрузку активити)
-        time.sleep(1)
+        time.sleep(1.5)
         printLog("End loop")
     printLog("Exit.")
